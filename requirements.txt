@@ -1,0 +1,10 @@
+certifi==2020.12.5
+chardet==4.0.0
+click==7.1.2
+gTTS==2.2.2
+idna==2.10
+playsound==1.2.2
+requests==2.25.1
+selenium==3.141.0
+six==1.16.0
+urllib3==1.26.4
