@@ -285,6 +285,7 @@ class App(Intro):
             i += 1
 
         self.root.attributes("-disabled", False)
+        self.driver.quit()
         self.add_buttons()
 
     def add_buttons(self):
@@ -386,6 +387,7 @@ class App(Intro):
 
         if quit_program:
             # Destroy the main window when the application needs to be exit
+            self.driver.quit()  # Exit the chrome driver when the program is closed
             self.root.destroy()
             exit(0)  # Clean exit
 
