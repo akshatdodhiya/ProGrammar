@@ -1,5 +1,23 @@
+"""
+
+App Name: Pro Grammar
+Version: 1.2
+Developer: Akshat Dodhiya
+Developer's GitHub Profile: https://github.com/akshatdodhiya
+Website: https://akshatdodhiya.blogspot.com
+
+"""
+
+# TODO: Add difficulty level choice for user
+# TODO: Resolve error when the app is tried to run offline -->
+#  self.tk.call(_tkinter.TclError: image "pyimage1" doesn't exist
+# TODO: Add a textbox for the user to enter words in it and then
+#  automatically check for spellings and give marks accordingly
+# TODO: Add a feature to view the meaning of the words while displaying the spellings in the end
+
 import os
 import time
+import random
 import webbrowser
 from tkinter import *
 from tkinter.messagebox import *
@@ -10,6 +28,8 @@ import requests
 from requests.exceptions import ConnectionError
 import sys
 
+online_mode = 0  # Mode in which user will get spellings, online -> 1 and offline -> 0
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -18,24 +38,25 @@ def resource_path(relative_path):
 
 
 def check_internet():
+    """
+    Checks internet connection of the user and sets he app mode likewise
+    """
+    global online_mode
     try:
         requests.get("https://google.com/").status_code
     except ConnectionError:
+        online_mode = 0
         msg_window = Tk()
         msg_window.withdraw()
-        showerror(title="No Internet Error!", message="Your device is not connected to internet, " +
-                                                      "Please connect to the internet!")
-        return False
+        showinfo(title="No Internet!", message="Switching to offline mode... :)")
     else:
-        return True
-
-
-# TODO: Change the name and logo of intro window and add gui to App() class
-# TODO: Add difficulty level choice for user
-# TODO: Add watermark2 (sujal) button with yt channel link
+        online_mode = 1
 
 
 class Intro:
+    """
+    Intro class to show the introduction and starting animation of the app
+    """
     def __init__(self):
         # Create main window and show intro of the app
         self.intro = Tk()
@@ -47,13 +68,14 @@ class Intro:
         self.intro.focus_force()
 
         self.frameCnt = 25
-        self.frames = [PhotoImage(file=resource_path('Images/intro.gif'), format='gif -index %i' % i)
-                       for i in range(self.frameCnt)]
+        self.frames = [PhotoImage(master=self.intro, file=resource_path('Images/intro.gif'),
+                                  format='gif -index %i' % i) for i in range(self.frameCnt)]
 
         self.label = Label(self.intro)
         self.label.pack(expand=YES, fill=BOTH)
         self.intro.after(0, self.update, 0)
 
+        playsound(resource_path("Sound Effects/intro.mp3"), False)
         self.intro.mainloop()
 
     def update(self, ind):
@@ -70,6 +92,7 @@ class Intro:
 
     def loading_screen(self):
         self.intro.config(bg="black")
+        playsound(resource_path("Sound Effects/loading.mp3"), False)
         self.intro.title("Loading your app")
         self.intro.attributes("-fullscreen", True)
         self.intro.focus_force()
@@ -107,13 +130,14 @@ class Intro:
 
 class App(Intro):
     def __init__(self, restart=False):
-        options = webdriver.ChromeOptions()
-        options.headless = True
-        options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        self.driver = webdriver.Chrome(executable_path=resource_path(r'Driver\chromedriver.exe'),
-                                       options=options, service_log_path=os.devnull)
-        self.driver.get('https://wordcounter.net/random-word-generator')  # Website to generate words
-        self.word_list = []  # list to store all the generated words
+        if online_mode:
+            options = webdriver.ChromeOptions()
+            options.headless = True
+            options.add_experimental_option("excludeSwitches", ["enable-logging"])
+            self.driver = webdriver.Chrome(executable_path=resource_path(r'Driver\chromedriver.exe'),
+                                           options=options, service_log_path=os.devnull)
+            self.driver.get('https://wordcounter.net/random-word-generator')  # Website to generate words
+            self.word_list = []  # list to store all the generated words
 
         if os.path.exists(resource_path("Audio")):
             self.clean_residuals(quit_program=False)
@@ -122,8 +146,12 @@ class App(Intro):
             Intro.__init__(self)
 
         # -------------------------------
+
+
         self.root = Tk()
-        self.frame = Frame(self.root)
+        # self.root = Toplevel()
+
+        self.frame = Frame(master=self.root)
         self.frame.config(bg="#3a3d3b")
         self.frame2 = Frame(self.root)
         self.frame2.config(bg="#3a3d3b")
@@ -136,7 +164,8 @@ class App(Intro):
         self.no_of_words.config(validate="key", validatecommand=(self.reg, '%P'))
         self.no_of_words.pack(pady=15)
         self.img_start = PhotoImage(file=resource_path("Images/start.png"))
-        self.btn_start = Button(self.root, image=self.img_start, command=self.get_words)
+        self.btn_start = Button(self.root, command=self.get_words)
+        self.btn_start.config(image=self.img_start)
         self.btn_start["bg"] = "#3a3d3b"
         self.btn_start["border"] = "3"
         self.btn_start["state"] = DISABLED
@@ -153,8 +182,8 @@ class App(Intro):
 
         self.btn_next = Button(self.root, height=3, width=20, text="Next", font=("Arial", 15), bg="#FFBD09",
                                command=self.speak)
-        self.btn_quit = Button(self.root, height=3, width=20, text="Quit", font=("Arial", 15), bg="#FFBD09",
-                               command=lambda: self.clean_residuals(quit_program=True))
+        self.btn_end = Button(self.root, height=3, width=20, text="Skip others and End", font=("Arial", 15),
+                              bg="#FFBD09", command=lambda: self.show_spellings())
 
         self.img_quit = PhotoImage(file=resource_path("Images/quit.png"))
         self.btn_quit_icon = Button(self.root, image=self.img_quit,
@@ -194,16 +223,18 @@ class App(Intro):
         # -------------------------------
 
         self.get_gui()
-        # self.get_words()
         self.word_number = 0
         self.root.mainloop()
 
     def callback(self, usr_input):
+        """
+        Call back method to enable or disable the start button as per user's input
+        """
         if usr_input.isdigit():
             self.switch()
             return True
 
-        elif usr_input is "":
+        elif usr_input == "":
             self.switch(1)
             return True
 
@@ -218,6 +249,7 @@ class App(Intro):
 
     def get_gui(self):
         self.root.title("Pro Grammar - Improve your grammar")
+        # self.root.withdraw()
         self.root.iconbitmap("Images/Icon.ico")
         self.root.config(menu=self.menu, bg="#3a3d3b")
         self.root.geometry("400x550")
@@ -264,16 +296,29 @@ class App(Intro):
         """
         # Input from the user to get number of words
         self.root.attributes("-disabled", True)
-        no_of_words = abs(int(self.no_of_words.get()))
-        textbox = self.driver.find_element_by_xpath('//*[@id="random_words_count"]')
-        textbox.send_keys(no_of_words)
-        # Find the generate button to generate words
-        btn = self.driver.find_element_by_xpath('//*[@id="random-words"]')
-        btn.click()  # Click on generate button to generate words
-        # Run loop for each span (words) from the generated output
-        for i in range(1, no_of_words + 1):
-            # Get all the span text from the output
-            self.word_list.append(self.driver.find_element_by_xpath(f'//*[@id="wordList"]/span[{i}]').text)
+        if online_mode:
+            no_of_words = abs(int(self.no_of_words.get()))
+            textbox = self.driver.find_element_by_xpath('//*[@id="random_words_count"]')
+            textbox.send_keys(no_of_words)
+            # Find the generate button to generate words
+            btn = self.driver.find_element_by_xpath('//*[@id="random-words"]')
+            btn.click()  # Click on generate button to generate words
+            # Run loop for each span (words) from the generated output
+            for i in range(1, no_of_words + 1):
+                # Get all the span text from the output
+                self.word_list.append(self.driver.find_element_by_xpath(f'//*[@id="wordList"]/span[{i}]').text)
+        else:
+            with open("WordList.txt", "r") as file:  # Open the wordList file to pick random words from
+                # Get the absolute integer value of user's input for number of words
+                no_of_words = abs(int(self.no_of_words.get()))
+                words = file.readlines()
+
+                # Get line numbers for picking words from wordlist
+                line_numbers = [random.randint(0, 3871) for _ in range(1, no_of_words + 1)]
+
+                # Read the words on specific line numbers in wordlist and append them in self.word_list
+                # only if the space is not included in the word
+                self.word_list = [words[line].strip() for line in line_numbers]
 
         if not os.path.exists(resource_path("Audio")):
             os.mkdir(resource_path("Audio"))
@@ -285,7 +330,8 @@ class App(Intro):
             i += 1
 
         self.root.attributes("-disabled", False)
-        self.driver.quit()
+        if online_mode:
+            self.driver.quit()
         self.add_buttons()
 
     def add_buttons(self):
@@ -299,7 +345,7 @@ class App(Intro):
         self.root.bind("<Left>", lambda _: self.speak(back=True))
         self.btn_next.pack(pady=7)
         self.root.bind("<Right>", lambda _: self.speak())
-        self.btn_quit.pack(pady=7)
+        self.btn_end.pack(pady=7)
         self.root.bind("<<Alt-Key-F4>>", lambda _: self.clean_residuals(quit_program=True))
 
     def speak(self, again=False, back=False):
@@ -336,10 +382,11 @@ class App(Intro):
         2) Create a text editor with write properties disabled to display spellings
         :return:
         """
+        self.no_of_words.destroy()
         self.btn_read.destroy()
         self.btn_prev.destroy()
         self.btn_next.destroy()
-        self.btn_quit.destroy()
+        self.btn_end.destroy()
 
         scroll_bar = Scrollbar(self.root)
 
@@ -364,9 +411,9 @@ class App(Intro):
 
         for word in self.word_list:
             self.spellings_editor.config(state='normal')
-            time.sleep(0.1)
+            time.sleep(0.2)
             self.spellings_editor.insert("end", word.capitalize() + "\t\t")
-            time.sleep(0.07)
+            time.sleep(0.15)
             self.spellings_editor.config(state='disabled')
 
     def clean_residuals(self, quit_program=False):
@@ -387,8 +434,11 @@ class App(Intro):
 
         if quit_program:
             # Destroy the main window when the application needs to be exit
-            self.driver.quit()  # Exit the chrome driver when the program is closed
+
+            if online_mode:
+                self.driver.quit()  # Exit the chrome driver when the program is closed
             self.root.destroy()
+            playsound(resource_path("Sound Effects/quit.mp3"))
             exit(0)  # Clean exit
 
     def restart_app(self):
@@ -397,6 +447,6 @@ class App(Intro):
 
 
 if __name__ == '__main__':
-    if check_internet():
-        start_app = App
-        start_app()
+    check_internet()
+    start_app = App
+    start_app()
