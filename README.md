@@ -1,3 +1,5 @@
+![Version](https://img.shields.io/badge/Program_Version-1.2-yellow?style=plastic)  ![Language](https://img.shields.io/badge/Language-Python-red?style=plastic&logo=python)
+
 # PRO GRAMMAR - IMPROVE YOUR GRAMMAR
 
 An app written in python language that will help you improve your grammar skills by making you practice spellings as many as you want.
