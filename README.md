@@ -2,6 +2,8 @@
 
 # PRO GRAMMAR - IMPROVE YOUR GRAMMAR
 
+![Logo](https://github.com/akshatdodhiya/ProGrammar/blob/main/Images/logo.png)
+
 An app written in python language that will help you improve your grammar skills by making you practice spellings as many as you want.
 
 ## Features
