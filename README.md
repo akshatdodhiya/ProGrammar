@@ -44,6 +44,10 @@ Step 3: Run the program
 ```bash
 python3 Pro_grammar.py
 ```
+Or If you're in Mac OS
+```bash
+python3 Pro_grammar_mac.py
+```
 
 Step 4: If you are connected to the internet then, Enjoy using the application.
 
