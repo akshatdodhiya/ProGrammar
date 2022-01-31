@@ -1,2 +1,4 @@
 venv/
 .idea/
+Audio/
+.DS_Store

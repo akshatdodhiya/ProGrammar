@@ -1,10 +1,10 @@
 """
 
-App Name: Pro Grammar
+App Name: Pro Grammar for MACOS
 Version: 1.2
 Developer: Akshat Dodhiya
 Developer's GitHub Profile: https://github.com/akshatdodhiya
-Website: https://akshatdodhiya.blogspot.com
+Website: https://akshatdodhiya.blogspot.com | https://akshatdodhiya.tech
 
 """
 
@@ -25,6 +25,7 @@ from selenium import webdriver
 from gtts.tts import gTTS
 from playsound import playsound, PlaysoundException
 import requests
+from PIL import ImageTk
 from requests.exceptions import ConnectionError
 import sys
 
@@ -69,7 +70,7 @@ class Intro:
         self.intro.focus_force()
 
         self.frameCnt = 25
-        self.frames = [PhotoImage(master=self.intro, file=resource_path('Images/intro.gif'),
+        self.frames = [ImageTk.PhotoImage(master=self.intro, file=resource_path('Images/intro.gif'),
                                   format='gif -index %i' % i) for i in range(self.frameCnt)]
 
         self.label = Label(self.intro)
@@ -162,7 +163,7 @@ class App(Intro):
         self.reg = self.no_of_words.register(self.callback)
         self.no_of_words.config(validate="key", validatecommand=(self.reg, '%P'))
         self.no_of_words.pack(pady=15)
-        self.img_start = PhotoImage(file=resource_path("Images/start.png"))
+        self.img_start = ImageTk.PhotoImage(file=resource_path("Images/start.png"))
         self.btn_start = Button(self.root, command=self.get_words)
         self.btn_start.config(image=self.img_start)
         self.btn_start["bg"] = "#3a3d3b"
@@ -184,11 +185,11 @@ class App(Intro):
         self.btn_end = Button(self.root, height=3, width=20, text="Skip others and End", font=("Arial", 15),
                               bg="#FFBD09", command=lambda: self.show_spellings())
 
-        self.img_quit = PhotoImage(file=resource_path("Images/quit.png"))
+        self.img_quit = ImageTk.PhotoImage(file=resource_path("Images/quit.png"))
         self.btn_quit_icon = Button(self.root, image=self.img_quit,
                                     command=lambda: self.clean_residuals(quit_program=True))
 
-        self.img_restart = PhotoImage(file=resource_path("Images/restart.png"))
+        self.img_restart = ImageTk.PhotoImage(file=resource_path("Images/restart.png"))
         self.btn_restart = Button(self.root, image=self.img_restart,
                                   command=self.restart_app)
 
@@ -202,20 +203,20 @@ class App(Intro):
         self.watermark2_text = Label(self.frame, text="DESIGNER: ", font=("New Roman", 20),
                                      bg="#3a3d3b", fg="white")
 
-        self.img_git = PhotoImage(file=resource_path("Images/github.png"))
+        self.img_git = ImageTk.PhotoImage(file=resource_path("Images/github.png"))
         self.btn_git = Button(self.frame, image=self.img_git,
                               command=lambda: webbrowser.open("https://github.com/akshatdodhiya"))
 
-        self.img_insta = PhotoImage(file=resource_path("Images/instagram.png"))
+        self.img_insta = ImageTk.PhotoImage(file=resource_path("Images/instagram.png"))
         self.btn_insta = Button(self.frame, image=self.img_insta,
                                 command=lambda: webbrowser.open("https://www.instagram.com/akshat.dodhiya/"))
 
-        self.img_yt = PhotoImage(file=resource_path("Images/youtube.png"))
+        self.img_yt = ImageTk.PhotoImage(file=resource_path("Images/youtube.png"))
         self.btn_yt = Button(self.frame, image=self.img_yt,
                              command=lambda:
                              webbrowser.open("https://www.youtube.com/channel/UCFbGYXuQKVt9rzNNaJq92EA"))
 
-        self.img_watermark2 = PhotoImage(file=resource_path("Images/watermark2.png"))
+        self.img_watermark2 = ImageTk.PhotoImage(file=resource_path("Images/watermark2.png"))
         self.btn_watermark2 = Button(self.frame, image=self.img_watermark2,
                                      command=lambda:
                                      webbrowser.open("https://www.youtube.com/channel/UCZiR2OBqTGcUPhdhsIw9Ljg"))
@@ -294,7 +295,8 @@ class App(Intro):
         :return: None
         """
         # Input from the user to get number of words
-        self.root.attributes("-disabled", True)
+        # self.root.attributes("-disabled", True)
+
         if online_mode:
             no_of_words = abs(int(self.no_of_words.get()))
             textbox = self.driver.find_element_by_xpath('//*[@id="random_words_count"]')
@@ -328,7 +330,7 @@ class App(Intro):
             tts.save(resource_path(f"Audio/{i}.mp3"))
             i += 1
 
-        self.root.attributes("-disabled", False)
+        # self.root.attributes("-disabled", False)
         if online_mode:
             self.driver.quit()
         self.add_buttons()
@@ -367,10 +369,14 @@ class App(Intro):
         else:
             # Speak the next spelling only if present
             try:
-                if len(self.word_list) > self.word_number:
+                if (len(self.word_list) - 1) > self.word_number:
                     self.word_number += 1
                     playsound(resource_path(f"Audio/{self.word_number}.mp3").replace(" ", "%20"))
                     self.btn_prev.config(state=NORMAL)
+                else:
+                    self.btn_next.config(state=DISABLED)
+                    self.show_spellings()
+
             except PlaysoundException:
                 self.btn_next.config(state=DISABLED)
                 self.show_spellings()
